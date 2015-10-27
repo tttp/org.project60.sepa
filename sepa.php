@@ -516,6 +516,9 @@ function sepa_civicrm_alterAPIPermissions($entity, $action, &$params, &$permissi
  * make sure, people don't create (broken) payment with SDD payment instrument, but w/o mandates
  */
 function sepa_civicrm_validateForm( $formName, &$fields, &$files, &$form, &$errors ) {
+  // first, pass trough to PP validation
+  sepa_pp_civicrm_validateForm($formName, $fields, $files, $form, $errors);
+
   if ($formName == 'CRM_Contribute_Form_Contribution') {
     // we'll just focus on the payment_instrument_id 
     if (empty($fields['payment_instrument_id'])) return;

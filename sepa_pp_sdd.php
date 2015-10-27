@@ -151,6 +151,38 @@ function sepa_pp_buildForm ( $formName, &$form ) {
 	}
 }
 
+
+/**
+ * CiviCRM PP validateForm hook
+ *
+ * validate payment processor form
+ */
+function sepa_pp_civicrm_validateForm( $formName, &$fields, &$files, &$form, &$errors ) {
+	if ($formName == 'CRM_Contribute_Form_Contribution_Main') {
+		if (!empty($fields['payment_processor'])) {
+			$paymentProcessor = civicrm_api3('PaymentProcessor', 'getsingle', array('id' => $fields['payment_processor']));
+			if ($paymentProcessor['class_name'] == 'Payment_SDD') {
+				// this is a SEPA payment processor
+				if (!empty($fields['bank_account_number'])) {
+					// IBAN is set...
+					if (empty($fields['bank_identification_number'])) {
+						// ... but BIC is empty: try to look up the BIC
+						try {
+							$lookup = civicrm_api3('Bic', 'findbyiban', array('iban' => $fields['bank_account_number']));
+							if (!empty($lookup['bic'])) {
+								$fields['bank_identification_number'] = $lookup['bic'];
+								$errors['bank_identification_number'] = NULL;
+							}
+						} catch (CiviCRM_API3_Exception $e) {
+							// nevermind then...				
+						}						
+					}
+				}
+			}
+		}
+	}
+}
+
 /**
  * postProcess Hook for payment processor
  */
